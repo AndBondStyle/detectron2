@@ -34,7 +34,7 @@ def load_coco_json(json_file, image_root, dataset_name=None, extra_annotation_ke
 
     Args:
         json_file (str): full path to the json file in COCO instances annotation format.
-        image_root (str): the directory where the images in this json file exists.
+        image_root (str or path-like): the directory where the images in this json file exists.
         dataset_name (str): the name of the dataset (e.g., coco_2017_train).
             If provided, this function will also put "thing_classes" into
             the metadata associated with this dataset.
@@ -44,7 +44,7 @@ def load_coco_json(json_file, image_root, dataset_name=None, extra_annotation_ke
             For example, the densepose annotations are loaded in this way.
 
     Returns:
-        list[dict]: a list of dicts in Detectron2 standard format. (See
+        list[dict]: a list of dicts in Detectron2 standard dataset dicts format. (See
         `Using Custom Datasets </tutorials/datasets.html>`_ )
 
     Notes:
@@ -272,7 +272,8 @@ def load_sem_seg(gt_root, image_root, gt_ext="png", image_ext="jpg"):
 
 def convert_to_coco_dict(dataset_name):
     """
-    Convert a dataset in detectron2's standard format into COCO json format
+    Convert an instance detection/segmentation or keypoint detection dataset
+    in detectron2's standard format into COCO json format.
 
     Generic dataset description can be found here:
     https://detectron2.readthedocs.io/tutorials/datasets.html#register-a-dataset
@@ -281,9 +282,10 @@ def convert_to_coco_dict(dataset_name):
     http://cocodataset.org/#format-data
 
     Args:
-        dataset_name:
+        dataset_name (str):
             name of the source dataset
-            must be registered in DatastCatalog and in detectron2's standard format
+            Must be registered in DatastCatalog and in detectron2's standard format.
+            Must have corresponding metadata "thing_classes"
     Returns:
         coco_dict: serializable dict in COCO json format
     """
@@ -410,14 +412,17 @@ def convert_to_coco_json(dataset_name, output_file, allow_cached=True):
     PathManager.mkdirs(os.path.dirname(output_file))
     with file_lock(output_file):
         if PathManager.exists(output_file) and allow_cached:
-            logger.info(f"Cached annotations in COCO format already exist: {output_file}")
+            logger.warning(
+                f"Using previously cached COCO format annotations at '{output_file}'. "
+                "You need to clear the cache file if your dataset has been modified."
+            )
         else:
-            logger.info(f"Converting dataset annotations in '{dataset_name}' to COCO format ...)")
+            logger.info(f"Converting annotations of dataset '{dataset_name}' to COCO format ...)")
             coco_dict = convert_to_coco_dict(dataset_name)
 
-            with PathManager.open(output_file, "w") as json_file:
-                logger.info(f"Caching annotations in COCO format: {output_file}")
-                json.dump(coco_dict, json_file)
+            logger.info(f"Caching COCO format annotations at '{output_file}' ...")
+            with PathManager.open(output_file, "w") as f:
+                json.dump(coco_dict, f)
 
 
 if __name__ == "__main__":
