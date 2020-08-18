@@ -1,50 +1,12 @@
-### Requirements
-- Python >= 3.6(Conda)
-- PyTorch 1.3
-- [torchvision](https://github.com/pytorch/vision/) that matches the PyTorch installation.
-	You can install them together at [pytorch.org](https://pytorch.org) to make sure of this.
-- OpenCV, needed by demo and visualization
-- [fvcore](https://github.com/facebookresearch/fvcore/): `pip install git+https://github.com/facebookresearch/fvcore`
-- pycocotools: `pip install cython; pip install git+https://github.com/philferriere/cocoapi.git#subdirectory=PythonAPI`
-- VS2019(no test in older version)/CUDA10.1(no test in older version)
+## List of fixes
 
-### several files must be changed by manually.
-```
-file1: 
-  {your evn path}\Lib\site-packages\torch\include\torch\csrc\jit\argument_spec.h
-  example:
-  {C:\Miniconda3\envs\py36}\Lib\site-packages\torch\include\torch\csrc\jit\argument_spec.h(190)
-    static constexpr size_t DEPTH_LIMIT = 128;
-      change to -->
-    static const size_t DEPTH_LIMIT = 128;
-file2: 
-  {your evn path}\Lib\site-packages\torch\include\pybind11\cast.h
-  example:
-  {C:\Miniconda3\envs\py36}\Lib\site-packages\torch\include\pybind11\cast.h(1449)
-    explicit operator type&() { return *(this->value); }
-      change to -->
-    explicit operator type&() { return *((type*)this->value); }
-```
+- `cocoeval.cpp (483): error C3861: 'localtime_r': identifier not found`  
+**FIX:** add `<time.h>` header, replace `localtime_r` with `localtime_s`
 
-### Build detectron2
+- `nms_rotated_cuda.cu (14): error: name must be a namespace name`  
+**FIX:** insert `#define WITH_HIP` before line 10
 
-After having the above dependencies, run:
-```
-conda activate {your env}
-
-"C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
-
-git clone https://github.com/conansherry/detectron2
-
-cd detectron2
-
-python setup.py build develop
-```
-Note: you may need to rebuild detectron2 after reinstalling a different build of PyTorch.
-
-<div align="center">
-  <img src="docs/windows_build.png"/>
-</div>
+<hr>
 
 <img src=".github/Detectron2-Logo-Horz.svg" width="300" >
 
